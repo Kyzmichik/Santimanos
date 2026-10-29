@@ -1,0 +1,46 @@
+{% from "_macros.html" import csrf, stars %}
+{% extends "admin/base.html" %}
+{% block admin %}
+<h2>Скарги на відгуки ({{ grouped|length }})</h2>
+{% for rv, reps in grouped.items() %}
+<article class="card">
+  <p class="muted small">Відгук від {{ rv.author.public_name(true) }} про <a href="{{ url_for('catalog.master_detail', master_id=rv.master_id) }}">{{ rv.master.user.public_name(true) }}</a> · {{ rv.created_at|uk_date }}</p>
+  <p>{{ stars(rv.rating) }} <span class="kind kind-{{ rv.kind }}">{{ rv.kind_label }}</span></p>
+  <blockquote class="quote">{{ rv.text }}</blockquote>
+  {% if rv.reply_text %}<p class="muted small">Відповідь майстра: {{ rv.reply_text }}</p>{% endif %}
+  <h3>Скарги ({{ reps|length }})</h3>
+  <ul>{% for r in reps %}<li><strong>{{ r.reason_label }}</strong> — {{ r.reporter.public_name(true) }}{% if r.comment %}: {{ r.comment }}{% endif %}</li>{% endfor %}</ul>
+  {% if rv.edits %}
+  <details><summary>Історія змін відгуку ({{ rv.edits|length }})</summary>
+    {% for e in rv.edits %}<p class="small"><span class="muted">{{ e.edited_at|local_dt }}</span> — було: {{ e.old_rating }}★, {{ e.old_kind }}<br>{{ e.old_text }}</p>{% endfor %}
+  </details>
+  {% endif %}
+  <div class="actions">
+    <form method="post" action="{{ url_for('admin.hide_review', review_id=rv.id) }}">{{ csrf() }}<button class="btn btn-sm btn-danger">Приховати відгук</button></form>
+    <form method="post" action="{{ url_for('admin.dismiss_review_reports', review_id=rv.id) }}">{{ csrf() }}<button class="btn btn-sm btn-ghost">Відхилити скарги</button></form>
+  </div>
+</article>
+{% else %}<div class="empty"><p>Відкритих скарг на відгуки немає.</p></div>{% endfor %}
+
+<h2>Скарги на профілі ({{ profile_reports|length }})</h2>
+{% for p in profile_reports %}
+<article class="card">
+  <p><strong>{{ p.user.first_name }} {{ p.user.last_name }}</strong> <span class="muted small">{{ p.user.email }}</span></p>
+  <p><strong>{{ p.reason_label }}</strong> — від {{ p.reporter.public_name(true) }}{% if p.comment %}: {{ p.comment }}{% endif %}</p>
+  <div class="actions">
+    {% if p.user.master %}<a class="btn btn-sm btn-ghost" href="{{ url_for('catalog.master_detail', master_id=p.user.master.id) }}">Профіль</a>{% endif %}
+    {% if not p.user.is_admin and not p.user.is_blocked %}<form method="post" action="{{ url_for('admin.toggle_block', user_id=p.user.id) }}">{{ csrf() }}<input type="hidden" name="back" value="/admin/reports"><button class="btn btn-sm btn-danger">Заблокувати користувача</button></form>{% endif %}
+    <form method="post" action="{{ url_for('admin.resolve_profile_report', report_id=p.id) }}">{{ csrf() }}<button class="btn btn-sm btn-ghost">Закрити скаргу</button></form>
+  </div>
+</article>
+{% else %}<div class="empty"><p>Відкритих скарг на профілі немає.</p></div>{% endfor %}
+
+<h2>Приховані відгуки ({{ hidden|length }})</h2>
+{% for rv in hidden %}
+<article class="card">
+  <p class="muted small">{{ rv.author.public_name(true) }} → {{ rv.master.user.public_name(true) }} · {{ rv.created_at|uk_date }}</p>
+  <blockquote class="quote">{{ rv.text }}</blockquote>
+  <form method="post" action="{{ url_for('admin.restore_review', review_id=rv.id) }}">{{ csrf() }}<button class="btn btn-sm btn-ghost">Повернути в профіль</button></form>
+</article>
+{% else %}<p class="muted">Прихованих відгуків немає.</p>{% endfor %}
+{% endblock %}

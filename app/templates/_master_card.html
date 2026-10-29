@@ -1,0 +1,22 @@
+{% from "_macros.html" import avatar, price, rating_line %}
+<a class="card master-card" href="{{ url_for('catalog.master_detail', master_id=m.id) }}">
+  <div class="mc-head">
+    {{ avatar(m.user, 56) }}
+    <div>
+      <h3>{{ m.user.public_name(current_user.is_authenticated) }}</h3>
+      <p class="muted">{{ m.headline or 'Майстер' }}</p>
+      {% if m.user.is_verified %}<span class="verified" title="Особу підтверджено">✓ Підтверджено</span>{% endif %}
+    </div>
+  </div>
+  {% if m.categories %}
+  <p class="chips">{% for c in m.categories[:3] %}<span class="chip">{{ c.name }}</span>{% endfor %}</p>
+  {% endif %}
+  <p class="mc-meta muted">
+    {% if m.user.location %}{{ m.user.location }}{% else %}Район не вказано{% endif %}
+    {% if m.experience_years is not none %} — досвід {{ m.experience_years }} р.{% endif %}
+  </p>
+  <p class="mc-foot">
+    <span>{{ rating_line(m) }}</span>
+    {% if m.min_price is not none %}<strong>від {{ m.min_price|money }} {{ currency }}</strong>{% endif %}
+  </p>
+</a>

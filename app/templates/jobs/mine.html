@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Мої заявки — Santimanos{% endblock %}
+{% block content %}
+<h1>Мої заявки</h1>
+{% set active = 'jobs' %}{% include "account/_tabs.html" %}
+<p><a class="btn btn-sm" href="{{ url_for('jobs.new') }}">Нова заявка</a></p>
+{% if jobs %}
+<div class="grid">{% for job in jobs %}{% include "jobs/_job_card.html" %}{% endfor %}</div>
+{% else %}
+<div class="empty"><p>У вас ще немає заявок. Створіть першу — майстри запропонують ціну.</p></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "admin/base.html" %}
+{% block admin %}
+{% if open_reports %}<div class="flash flash-error">Відкритих скарг: <strong>{{ open_reports }}</strong>. <a href="{{ url_for('admin.reports') }}">Переглянути</a></div>{% endif %}
+<div class="grid stats">
+  {% for label, value in stats.items() %}<div class="card stat"><span class="big-num">{{ value }}</span><span class="muted">{{ label }}</span></div>{% endfor %}
+</div>
+<section class="card">
+  <h2>Заявки за статусами</h2>
+  <table class="table">{% for label, n in by_status.items() %}<tr><td>{{ label }}</td><td><strong>{{ n }}</strong></td></tr>{% endfor %}</table>
+</section>
+{% endblock %}

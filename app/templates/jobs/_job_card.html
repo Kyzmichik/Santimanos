@@ -1,0 +1,11 @@
+{% from "_macros.html" import badge %}
+<a class="card job-card" href="{{ url_for('jobs.detail', job_id=job.id) }}">
+  <div class="jc-top"><h3>{{ job.title }}</h3>{{ badge(job) }}</div>
+  {% if job.invited_master_id %}<p><span class="badge badge-discussing">{% if current_user.master and job.invited_master_id == current_user.master.id %}Запрошення для вас{% else %}Особиста заявка{% endif %}</span></p>{% endif %}
+  <p class="muted">{{ job.category.name }}{% if job.district %} — {{ job.district }}{% endif %}{% if job.desired_date %} — до {{ job.desired_date|uk_date }}{% endif %}</p>
+  <p class="jc-desc">{{ job.description|truncate(160) }}</p>
+  <p class="jc-foot muted">
+    {% if job.budget is not none %}<strong>Бюджет: {{ job.budget|money }} {{ currency }}</strong>{% else %}Бюджет не вказано{% endif %}
+    <span>Пропозицій: {{ job.responses|length }}</span>
+  </p>
+</a>

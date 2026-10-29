@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}Нова заявка — Santimanos{% endblock %}
+{% block content %}
+<div class="narrow wide">
+  <h1>Нова заявка</h1>
+  {% if invited %}
+  <div class="flash flash-success">Особиста заявка для майстра <strong>{{ invited.user.public_name(true) }}</strong>. Її побачить лише він. Якщо відмовиться, заявка відкриється для інших майстрів.</div>
+  {% else %}
+  <p class="muted">Опишіть, що потрібно зробити. Майстри з потрібної категорії побачать заявку й запропонують ціну.</p>
+  {% endif %}
+  <form method="post" enctype="multipart/form-data" class="card form">
+    {{ form.hidden_tag() }}
+    {{ field(form.category_id) }}
+    <p class="hint-box" id="cat-hint" hidden></p>
+    {{ field(form.title, placeholder="Наприклад: укласти плитку у ванній") }}
+    {{ field(form.description, rows=6, hint="Розмір, матеріали, терміни — все, що допоможе оцінити роботу") }}
+    <div class="row2">{{ field(form.district, list="districts") }}{{ field(form.desired_date) }}</div>
+    {{ field(form.budget, step="0.01", min="0", hint="Необов'язково. Можна залишити порожнім") }}
+    {{ field(form.photos, accept=".jpg,.jpeg,.png,.webp") }}
+    <button class="btn">Опублікувати заявку</button>
+  </form>
+</div>
+<script>
+(function () {
+  var hints = {{ hints|tojson }};
+  var sel = document.getElementById('category_id'), box = document.getElementById('cat-hint');
+  function update() {
+    var h = hints[sel.value];
+    box.textContent = h ? 'Підказка: ' + h : '';
+    box.hidden = !h;
+  }
+  sel.addEventListener('change', update);
+  update();
+})();
+</script>
+{% endblock %}

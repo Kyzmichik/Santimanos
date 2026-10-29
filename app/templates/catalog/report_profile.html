@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}Скарга на профіль — Santimanos{% endblock %}
+{% block content %}
+<div class="narrow wide">
+  <h1>Скарга на профіль</h1>
+  <p class="muted">Профіль: {{ m.user.public_name(true) }}</p>
+  <form method="post" class="card form">
+    {{ form.hidden_tag() }}
+    {{ field(form.reason) }}
+    {{ field(form.comment, rows=3) }}
+    <button class="btn">Надіслати на модерацію</button>
+    <a class="muted" href="{{ url_for('catalog.master_detail', master_id=m.id) }}">Скасувати</a>
+  </form>
+</div>
+{% endblock %}

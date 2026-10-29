@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, check %}
+{% block content %}
+<div class="narrow">
+  <h1>Реєстрація</h1>
+  <form method="post" class="card form">
+    {{ form.hidden_tag() }}
+    <div class="row2">
+      {{ field(form.first_name, autocomplete="given-name") }}
+      {{ field(form.last_name, autocomplete="family-name") }}
+    </div>
+    {{ field(form.email, autocomplete="email") }}
+    {{ field(form.password, hint="Мінімум 8 символів", autocomplete="new-password") }}
+    {{ field(form.password2, autocomplete="new-password") }}
+    {{ check(form.is_master) }}
+    <button class="btn">Створити акаунт</button>
+  </form>
+  <p class="muted">Уже є акаунт? <a href="{{ url_for('auth.login') }}">Увійти</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="empty">
+  <h1>Забагато запитів</h1>
+  <p>Зачекайте хвилину й спробуйте ще раз.</p>
+  <a class="btn" href="{{ url_for('catalog.index') }}">На головну</a>
+</div>
+{% endblock %}

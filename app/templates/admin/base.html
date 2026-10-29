@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Адмін-панель — Santimanos{% endblock %}
+{% block content %}
+<h1>Адмін-панель</h1>
+<div class="tabs">
+  {% for ep, label in [('admin.dashboard','Статистика'),('admin.users','Користувачі'),('admin.reports','Скарги'),('admin.categories','Категорії'),('admin.districts','Райони')] %}
+  <a href="{{ url_for(ep) }}" class="{{ 'on' if request.endpoint == ep }}">{{ label }}</a>
+  {% endfor %}
+</div>
+{% block admin %}{% endblock %}
+{% endblock %}

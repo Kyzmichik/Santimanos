@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar %}
+{% block title %}Повідомлення — Santimanos{% endblock %}
+{% block content %}
+<h1>Повідомлення</h1>
+{% set active = 'messages' %}{% include "account/_tabs.html" %}
+{% if convs %}
+<div class="card convs">
+  {% for c in convs %}
+  {% set other = c.other(current_user) %}{% set unread = c.unread_for(current_user) %}{% set last = c.messages[-1] %}
+  <a class="conv {{ 'unread' if unread }}" href="{{ url_for('messages.thread', conv_id=c.id) }}">
+    {{ avatar(other, 48) }}
+    <div class="conv-main">
+      <strong>{{ other.public_name(true) }}</strong>
+      <p class="muted">{% if last.sender_id == current_user.id %}Ви: {% endif %}{{ (last.text or 'Фото')|truncate(80) }}</p>
+    </div>
+    <div class="conv-side"><span class="muted small">{{ c.last_message_at|local_dt('%d.%m %H:%M') }}</span>{% if unread %}<span class="count">{{ unread }}</span>{% endif %}</div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty"><p>Повідомлень поки немає. Напишіть майстру з його профілю або із сторінки заявки.</p>
+  <a class="btn" href="{{ url_for('catalog.masters') }}">Знайти майстра</a></div>
+{% endif %}
+{% endblock %}

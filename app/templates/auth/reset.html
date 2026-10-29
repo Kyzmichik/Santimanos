@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block content %}
+<div class="narrow">
+  <h1>Новий пароль</h1>
+  <form method="post" class="card form">
+    {{ form.hidden_tag() }}
+    {{ field(form.password, hint="Мінімум 8 символів", autocomplete="new-password") }}
+    {{ field(form.password2, autocomplete="new-password") }}
+    <button class="btn">Зберегти пароль</button>
+  </form>
+</div>
+{% endblock %}

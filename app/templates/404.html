@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="empty">
+  <h1>Сторінку не знайдено</h1>
+  <p>Можливо, адресу введено з помилкою або резюме приховано майстром.</p>
+  <a class="btn" href="{{ url_for('catalog.masters') }}">До каталогу майстрів</a>
+</div>
+{% endblock %}

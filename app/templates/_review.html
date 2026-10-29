@@ -1,0 +1,40 @@
+{% from "_macros.html" import avatar, stars, csrf %}
+<article class="rv rv-{{ rv.kind }}" id="review-{{ rv.id }}">
+  <header class="rv-head">
+    {{ avatar(rv.author, 40) }}
+    <div>
+      <strong>{{ rv.author.public_name(current_user.is_authenticated) }}</strong>
+      <div>{{ stars(rv.rating) }} <span class="kind kind-{{ rv.kind }}">{{ rv.kind_label }}</span></div>
+    </div>
+    <span class="muted rv-date">{{ rv.created_at|uk_date }}{% if rv.updated_at %} (змінено){% endif %}</span>
+  </header>
+  <p class="pre">{{ rv.text }}</p>
+  {% if rv.photo %}<a href="{{ url_for('static', filename='uploads/reviews/' ~ rv.photo) }}" target="_blank" rel="noopener"><img class="rv-photo" src="{{ url_for('static', filename='uploads/reviews/' ~ rv.photo) }}" alt="Фото до відгуку" loading="lazy"></a>{% endif %}
+
+  {% if rv.reply_text %}
+  <div class="reply">
+    <strong>Відповідь майстра</strong> <span class="muted">{{ rv.reply_at|uk_date }}</span>
+    <p class="pre">{{ rv.reply_text }}</p>
+  </div>
+  {% endif %}
+
+  {% if current_user.is_authenticated %}
+  <footer class="rv-actions">
+    {% if rv.author_id == current_user.id %}
+      {% if rv.can_edit %}<a href="{{ url_for('reviews.edit', review_id=rv.id) }}">Редагувати</a>{% endif %}
+    {% else %}
+      <a href="{{ url_for('reviews.report', review_id=rv.id) }}" class="muted">Поскаржитись на відгук</a>
+    {% endif %}
+    {% if current_user.master and rv.master_id == current_user.master.id and not rv.reply_text %}
+    <details class="reply-form">
+      <summary>Відповісти</summary>
+      <form method="post" action="{{ url_for('reviews.reply', review_id=rv.id) }}" class="form">
+        {{ csrf() }}
+        <textarea name="text" rows="3" required minlength="5" maxlength="1000" placeholder="Одна публічна відповідь. Без образ, телефонів і посилань."></textarea>
+        <button class="btn btn-sm">Опублікувати відповідь</button>
+      </form>
+    </details>
+    {% endif %}
+  </footer>
+  {% endif %}
+</article>

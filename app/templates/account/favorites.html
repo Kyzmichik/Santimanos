@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Обране — Santimanos{% endblock %}
+{% block content %}
+<h1>Обране</h1>
+{% set active = 'favorites' %}{% include "account/_tabs.html" %}
+{% if masters %}
+<div class="grid">{% for m in masters %}{% include "_master_card.html" %}{% endfor %}</div>
+{% else %}
+<div class="empty"><p>Поки порожньо. Натисніть «☆ В обране» на профілі майстра, щоб повернутись до нього пізніше.</p>
+  <a class="btn" href="{{ url_for('catalog.masters') }}">До каталогу</a></div>
+{% endif %}
+{% endblock %}

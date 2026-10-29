@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Відгуки — Santimanos{% endblock %}
+{% block content %}
+<h1>Відгуки</h1>
+{% set active = 'reviews' %}{% include "account/_tabs.html" %}
+
+{% if current_user.master %}
+<section>
+  <h2>Відгуки про мене</h2>
+  {% if received %}
+  <div class="card">{% for rv in received %}{% include "_review.html" %}{% endfor %}</div>
+  {% else %}<div class="empty"><p>Відгуків про вас ще немає. Вони з'являться після виконаних заявок.</p></div>{% endif %}
+</section>
+{% endif %}
+
+<section>
+  <h2>Мої відгуки</h2>
+  {% if written %}
+  <div class="card">
+    {% for rv in written %}
+    <p class="muted">Про майстра <a href="{{ url_for('catalog.master_detail', master_id=rv.master_id) }}">{{ rv.master.user.public_name(true) }}</a> — заявка «{{ rv.request.title }}»</p>
+    {% include "_review.html" %}
+    {% endfor %}
+  </div>
+  {% else %}<div class="empty"><p>Ви ще не залишали відгуків. Це можна зробити після виконання заявки.</p></div>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% from "_macros.html" import csrf %}
+{% extends "admin/base.html" %}
+{% block admin %}
+<p class="muted">Райони з цього списку з'являються як підказки у формах. Користувачі можуть вводити й інші.</p>
+<form method="post" action="{{ url_for('admin.district_add') }}" class="card form">
+  {{ csrf() }}
+  <label>Додати райони (через кому або з нового рядка)<textarea name="names" rows="3"></textarea></label>
+  <button class="btn btn-sm">Додати</button>
+</form>
+<div class="card">
+  {% for d in districts %}
+  <div class="cat-row"><span>{{ d.name }}</span>
+    <form method="post" action="{{ url_for('admin.district_delete', district_id=d.id) }}">{{ csrf() }}<button class="linklike danger">Видалити</button></form></div>
+  {% else %}<p class="muted">Районів ще немає.</p>{% endfor %}
+</div>
+{% endblock %}

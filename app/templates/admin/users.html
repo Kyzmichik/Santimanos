@@ -1,0 +1,38 @@
+{% from "_macros.html" import csrf %}
+{% extends "admin/base.html" %}
+{% block admin %}
+<form method="get" class="feed-filter">
+  <input type="search" name="q" value="{{ q }}" placeholder="Email або імʼя" style="max-width:260px">
+  <select name="f" style="width:auto">
+    {% for v, l in [('', 'Усі'), ('masters', 'Майстри'), ('unverified', 'Майстри без підтвердження'), ('blocked', 'Заблоковані')] %}<option value="{{ v }}" {{ 'selected' if flt == v }}>{{ l }}</option>{% endfor %}
+  </select>
+  <button class="btn btn-sm">Знайти</button>
+</form>
+<div class="card scroll">
+<table class="table users">
+  <tr><th>Користувач</th><th>Статус</th><th>З</th><th></th></tr>
+  {% for u in pagination.items %}
+  <tr>
+    <td><strong>{{ u.first_name }} {{ u.last_name }}</strong><br><span class="muted small">{{ u.email }}</span></td>
+    <td class="chips">
+      {% if u.is_admin %}<span class="chip">Адмін</span>{% endif %}
+      {% if u.is_master %}<span class="chip">Майстер</span>{% endif %}
+      {% if u.is_verified %}<span class="chip chip-verified">✓ Підтверджено</span>{% endif %}
+      {% if not u.email_confirmed %}<span class="chip">Email не підтв.</span>{% endif %}
+      {% if u.is_blocked %}<span class="chip chip-bad">Заблокований</span>{% endif %}
+    </td>
+    <td class="muted small nowrap">{{ u.created_at|uk_date }}</td>
+    <td class="actions">
+      {% if u.is_master and u.master %}<a class="small" href="{{ url_for('catalog.master_detail', master_id=u.master.id) }}">Профіль</a>{% endif %}
+      {% if u.is_master %}<form method="post" action="{{ url_for('admin.toggle_verify', user_id=u.id) }}">{{ csrf() }}<input type="hidden" name="back" value="{{ request.full_path }}"><button class="linklike">{{ 'Зняти підтвердження' if u.is_verified else 'Підтвердити особу' }}</button></form>{% endif %}
+      {% if not u.is_admin %}<form method="post" action="{{ url_for('admin.toggle_block', user_id=u.id) }}">{{ csrf() }}<input type="hidden" name="back" value="{{ request.full_path }}"><button class="linklike danger">{{ 'Розблокувати' if u.is_blocked else 'Заблокувати' }}</button></form>{% endif %}
+    </td>
+  </tr>
+  {% else %}<tr><td colspan="4" class="muted">Нікого не знайдено.</td></tr>
+  {% endfor %}
+</table>
+</div>
+{% if pagination.pages > 1 %}
+<nav class="pager">{% for p in range(1, pagination.pages + 1) %}<a class="{{ 'on' if p == pagination.page }}" href="{{ url_for('admin.users', page=p, **args) }}">{{ p }}</a>{% endfor %}</nav>
+{% endif %}
+{% endblock %}

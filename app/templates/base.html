@@ -1,0 +1,71 @@
+{% from "_macros.html" import avatar, csrf %}
+<!doctype html>
+<html lang="uk" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Santimanos — майстри поруч{% endblock %}</title>
+  <script>
+    /* Світла тема — за замовчуванням; темна вмикається вручну й запам'ятовується на цьому пристрої. */
+    (function () {
+      var d = document.documentElement;
+      d.classList.add('js');
+      try { if (localStorage.getItem('santimanos-theme') === 'dark') d.setAttribute('data-theme', 'dark'); } catch (e) {}
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap&subset=cyrillic" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='ui.js') }}" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="logo" href="{{ url_for('catalog.index') }}" aria-label="Santimanos — на головну">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#2B59C3"/><path d="M9 21L20 11l11 10" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="14" y="22" width="12" height="9" rx="2" fill="#F5B82E"/></svg>
+      <span>Santimanos</span>
+    </a>
+    <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="nav" aria-label="Меню">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    </button>
+    <nav class="nav" id="nav" aria-label="Основна навігація">
+      <a href="{{ url_for('catalog.masters') }}" class="{{ 'active' if request.endpoint in ('catalog.masters', 'catalog.master_detail') }}">Майстри</a>
+      {% if current_user.is_authenticated %}
+        {% if current_user.is_master %}<a href="{{ url_for('jobs.feed') }}" class="{{ 'active' if request.endpoint == 'jobs.feed' }}">Заявки</a>{% else %}<a href="{{ url_for('jobs.mine') }}" class="{{ 'active' if request.endpoint == 'jobs.mine' }}">Мої заявки</a>{% endif %}
+        <a href="{{ url_for('messages.index') }}" class="{{ 'active' if request.blueprint == 'messages' }}">Повідомлення{% if unread_messages %} <span class="count">{{ unread_messages }}</span>{% endif %}</a>
+        {% if current_user.is_admin %}<a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if request.blueprint == 'admin' }}">Адмін</a>{% endif %}
+        <a class="me {{ 'active' if request.blueprint == 'account' }}" href="{{ url_for('account.profile') }}">{{ avatar(current_user, 28) }}<span>Кабінет</span></a>
+      {% endif %}
+      <span class="nav-sep" aria-hidden="true"></span>
+      {% if not current_user.is_authenticated %}<a href="{{ url_for('auth.login') }}">Увійти</a>{% endif %}
+      <a class="btn btn-sm {{ 'btn-ghost' if not current_user.is_authenticated else '' }}" href="{{ url_for('jobs.new') }}">Створити заявку</a>
+      {% if current_user.is_authenticated %}
+        <form method="post" action="{{ url_for('auth.logout') }}">{{ csrf() }}<button class="linklike">Вийти</button></form>
+      {% else %}
+        <a class="btn btn-sun btn-sm" href="{{ url_for('auth.register') }}">Реєстрація</a>
+      {% endif %}
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Перемкнути тему" title="Світла / темна тема">
+        <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}<div class="flash flash-{{ cat }}" role="status">{{ msg }}</div>{% endfor %}
+  {% endwith %}
+  {% if current_user.is_authenticated and not current_user.email_confirmed %}
+  <div class="flash flash-error">Підтвердіть email — ми надіслали лист із посиланням.
+    <form method="post" action="{{ url_for('auth.resend_confirmation') }}" class="inline">{{ csrf() }}<button class="linklike">Надіслати ще раз</button></form>
+  </div>
+  {% endif %}
+  {% block content %}{% endblock %}
+</main>
+
+<datalist id="districts">{% for d in district_names() %}<option value="{{ d }}">{% endfor %}</datalist>
+<footer class="foot"><div class="wrap">Santimanos · місцеві руки, і швидко</div></footer>
+</body>
+</html>

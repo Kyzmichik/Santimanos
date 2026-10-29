@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar, badge, field, price, rating_line, csrf %}
+{% block title %}{{ job.title }} — Santimanos{% endblock %}
+{% block content %}
+<div class="job-head">
+  <h1>{{ job.title }}</h1>{{ badge(job) }}
+  {% if job.invited_master %}<span class="badge badge-discussing">Особиста заявка для {{ job.invited_master.user.public_name(true) }}</span>{% endif %}
+</div>
+<p class="muted">
+  {{ job.category.name }}{% if job.district %} — {{ job.district }}{% endif %}
+  {% if job.desired_date %} — бажана дата: {{ job.desired_date|uk_date }}{% endif %}
+  — створено {{ job.created_at|uk_date }}
+</p>
+
+<div class="two r-body">
+  <div>
+    <section class="card">
+      <h2>Опис</h2>
+      <p class="pre">{{ job.description }}</p>
+      {% if job.photos %}
+      <div class="gallery">{% for p in job.photos %}
+        <figure><a href="{{ url_for('static', filename='uploads/requests/' ~ p.filename) }}" target="_blank" rel="noopener"><img src="{{ url_for('static', filename='uploads/requests/' ~ p.filename) }}" alt="Фото до заявки" loading="lazy"></a></figure>{% endfor %}</div>
+      {% endif %}
+    </section>
+
+    {% if is_owner %}
+    <section class="card" id="responses">
+      <h2>Пропозиції майстрів ({{ job.responses|length }})</h2>
+      {% for r in job.responses %}
+      <article class="offer {{ 'chosen' if job.chosen_master_id == r.master_id }}">
+        <div class="mc-head">
+          {{ avatar(r.master.user, 48) }}
+          <div>
+            <h3><a href="{{ url_for('catalog.master_detail', master_id=r.master_id) }}">{{ r.master.user.public_name(true) }}</a></h3>
+            <p class="muted">{{ rating_line(r.master) }}</p>
+          </div>
+          <strong class="offer-price">{{ r.price|money }} {{ currency }}</strong>
+        </div>
+        {% if r.comment %}<p class="pre">{{ r.comment }}</p>{% endif %}
+        <p><a class="btn btn-sm btn-ghost" href="{{ url_for('messages.to_responder', job_id=job.id, master_id=r.master_id) }}">Написати майстру</a></p>
+        {% if job.chosen_master_id == r.master_id %}<p><span class="badge badge-in_progress">Обраний виконавець</span></p>
+        {% elif job.is_open %}
+        <form method="post" action="{{ url_for('jobs.choose', job_id=job.id, response_id=r.id) }}">{{ csrf() }}<button class="btn btn-sm">Обрати виконавцем</button></form>
+        {% endif %}
+      </article>
+      {% else %}
+      <p class="muted">Пропозицій поки немає. Майстри побачать заявку у своїй стрічці й запропонують ціну.</p>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if not is_owner %}
+    <section class="card">
+      {% if my_response %}
+      <h2>Ваша пропозиція</h2>
+      <p><strong>{{ my_response.price|money }} {{ currency }}</strong></p>
+      {% if my_response.comment %}<p class="pre">{{ my_response.comment }}</p>{% endif %}
+      {% if job.chosen_master_id == my_response.master_id %}
+        <p><span class="badge badge-in_progress">Вас обрано виконавцем</span></p>
+      {% elif job.is_open %}
+      <form method="post" action="{{ url_for('jobs.withdraw', job_id=job.id, response_id=my_response.id) }}">{{ csrf() }}<button class="linklike danger">Відкликати пропозицію</button></form>
+      {% endif %}
+      {% elif can_respond %}
+      {% if is_invited %}
+      <div class="flash flash-success">Замовник запросив саме вас.
+        <form method="post" action="{{ url_for('jobs.decline', job_id=job.id) }}" class="inline" onsubmit="return confirm('Відхилити запрошення? Заявка відкриється для інших майстрів.')">{{ csrf() }}<button class="linklike danger">Відхилити запрошення</button></form>
+      </div>
+      {% endif %}
+      <h2>Запропонувати свою ціну</h2>
+      <form method="post" action="{{ url_for('jobs.respond', job_id=job.id) }}" class="form">
+        {{ form.hidden_tag() }}
+        {{ field(form.price, step="0.01", min="0") }}
+        {{ field(form.comment, rows=4, hint="Коли зможете почати, що входить у ціну") }}
+        <button class="btn">Надіслати пропозицію</button>
+      </form>
+      {% else %}
+      <p class="muted">Ця заявка вже не приймає пропозицій.</p>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    {% if job.review %}
+    <section class="card"><h2>Відгук про виконану роботу</h2>{% set rv = job.review %}{% include "_review.html" %}</section>
+    {% endif %}
+  </div>
+
+  <aside>
+    <section class="card">
+      <h2>Деталі</h2>
+      <dl class="facts">
+        <dt>Замовник</dt><dd>{{ job.customer.public_name(true) }}</dd>
+        <dt>Бюджет</dt><dd>{% if job.budget is not none %}{{ job.budget|money }} {{ currency }}{% else %}не вказано{% endif %}</dd>
+        {% if job.chosen_master %}<dt>Виконавець</dt><dd><a href="{{ url_for('catalog.master_detail', master_id=job.chosen_master_id) }}">{{ job.chosen_master.user.public_name(true) }}</a></dd>{% endif %}
+      </dl>
+      {% if not is_owner %}<a class="btn btn-sm btn-ghost" href="{{ url_for('messages.from_job', job_id=job.id) }}">Написати замовнику</a>{% endif %}
+    </section>
+
+    {% if is_owner and job.status not in ('done', 'cancelled') %}
+    <section class="card">
+      <h2>Керування</h2>
+      {% if job.status == 'in_progress' %}
+      <form method="post" action="{{ url_for('jobs.complete', job_id=job.id) }}">{{ csrf() }}<button class="btn">Позначити виконаною</button></form>
+      <p class="muted small">Після цього ви зможете залишити відгук.</p>
+      {% endif %}
+      <form method="post" action="{{ url_for('jobs.cancel', job_id=job.id) }}" onsubmit="return confirm('Скасувати заявку?')">{{ csrf() }}<button class="linklike danger">Скасувати заявку</button></form>
+    </section>
+    {% endif %}
+
+    {% if is_owner and job.status in ('done', 'cancelled') %}
+    <section class="card">
+      <h2>Потрібно ще раз?</h2>
+      <p><a class="btn btn-sm" href="{{ url_for('jobs.new', copy=job.id) }}">Замовити ще раз</a></p>
+      {% if job.chosen_master and job.status == 'done' %}
+      <p><a class="btn btn-sm btn-ghost" href="{{ url_for('jobs.new', copy=job.id, master=job.chosen_master_id) }}">Замовити ще раз у цього майстра</a></p>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    {% if is_owner and job.status == 'done' and not job.review %}
+    <section class="card">
+      <h2>Відгук</h2>
+      <p>Розкажіть, як минула робота: похваліть майстра або залиште скаргу.</p>
+      <a class="btn" href="{{ url_for('reviews.create', job_id=job.id) }}">Залишити відгук</a>
+    </section>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

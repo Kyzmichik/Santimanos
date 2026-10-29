@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block content %}
+<div class="narrow">
+  <h1>Відновлення пароля</h1>
+  <p class="muted">Вкажіть email акаунта — ми надішлемо посилання для нового пароля.</p>
+  <form method="post" class="card form">
+    {{ form.hidden_tag() }}
+    {{ field(form.email, autocomplete="email") }}
+    <button class="btn">Надіслати посилання</button>
+  </form>
+</div>
+{% endblock %}

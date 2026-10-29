@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, check %}
+{% block content %}
+<div class="narrow">
+  <h1>Вхід</h1>
+  <form method="post" class="card form">
+    {{ form.hidden_tag() }}
+    {{ field(form.email, autocomplete="email") }}
+    {{ field(form.password, autocomplete="current-password") }}
+    {{ check(form.remember) }}
+    <button class="btn">Увійти</button>
+  </form>
+  <p class="muted"><a href="{{ url_for('auth.forgot') }}">Забули пароль?</a></p>
+  <p class="muted">Немає акаунта? <a href="{{ url_for('auth.register') }}">Зареєструватися</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% macro avatar(user, size=64) %}
+{% if user.avatar %}
+<img class="avatar" style="--s:{{ size }}px" src="{{ url_for('static', filename='uploads/avatars/' ~ user.avatar) }}" alt="">
+{% else %}
+<span class="avatar avatar-ph" style="--s:{{ size }}px" aria-hidden="true">{{ user.initials }}</span>
+{% endif %}
+{% endmacro %}
+
+{% macro field(f, hint=None) %}
+<div class="field">
+  {{ f.label }}
+  {{ f(**kwargs) }}
+  {% if hint %}<small>{{ hint }}</small>{% endif %}
+  {% for e in f.errors %}<span class="err">{{ e }}</span>{% endfor %}
+</div>
+{% endmacro %}
+
+{% macro check(f) %}
+<label class="check">{{ f() }} <span>{{ f.label.text }}</span></label>
+{% endmacro %}
+
+{% macro price(s, currency) -%}
+{%- if s.unit == 'from' -%}від {{ s.price|money }} {{ currency }}
+{%- else -%}{{ s.price|money }} {{ currency }} {{ s.unit_label }}{%- endif -%}
+{%- endmacro %}
+
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro stars(n) -%}
+<span class="stars" role="img" aria-label="Оцінка {{ '%.1f'|format(n) }} з 5">{% for i in range(1, 6) %}<span class="{{ 'on' if i <= n|round(0, 'common') }}">★</span>{% endfor %}</span>
+{%- endmacro %}
+
+{% macro rating_line(m) %}
+{% if m.rating_count %}{{ stars(m.rating_avg) }} <strong>{{ '%.1f'|format(m.rating_avg) }}</strong> <span class="muted">({{ m.rating_count }} {{ m.rating_count|review_word }})</span>
+{% else %}<span class="muted">Новий майстер — відгуків ще немає</span>{% endif %}
+{% endmacro %}
+
+{% macro badge(job) %}<span class="badge badge-{{ job.status }}">{{ job.status_label }}</span>{% endmacro %}

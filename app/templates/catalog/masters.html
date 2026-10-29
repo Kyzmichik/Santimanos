@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Майстри — Santimanos{% endblock %}
+{% block content %}
+<h1>Майстри</h1>
+<div class="layout">
+  <form class="card form filters" method="get">
+    <label>Пошук<input type="search" name="q" value="{{ f.q }}" placeholder="Імʼя або послуга"></label>
+    <label>Категорія
+      <select name="category">
+        <option value="">Усі</option>
+        {% for p in parents %}
+        <optgroup label="{{ p.name }}">
+          <option value="{{ p.id }}" {{ 'selected' if f.category == p.id }}>Усе: {{ p.name }}</option>
+          {% for c in p.children %}<option value="{{ c.id }}" {{ 'selected' if f.category == c.id }}>{{ c.name }}</option>{% endfor %}
+        </optgroup>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Район<input name="district" value="{{ f.district }}" list="districts"></label>
+    <label>Ціна послуги до, {{ currency }}<input type="number" name="max_price" min="0" step="1" value="{{ f.max_price }}"></label>
+    <label>Рейтинг від
+      <select name="min_rating">
+        <option value="">Будь-який</option>
+        {% for r in (4.5, 4, 3) %}<option value="{{ r }}" {{ 'selected' if f.min_rating|string == r|string }}>{{ r }} і вище</option>{% endfor %}
+      </select>
+    </label>
+    <label>Сортування
+      <select name="sort">{% for k, label in sorts.items() %}<option value="{{ k }}" {{ 'selected' if f.sort == k }}>{{ label }}</option>{% endfor %}</select>
+    </label>
+    <button class="btn">Показати</button>
+    <a class="muted" href="{{ url_for('catalog.masters') }}">Скинути фільтри</a>
+  </form>
+
+  <div>
+    {% if pagination.items %}
+    <p class="muted">Знайдено: {{ pagination.total }}</p>
+    <div class="grid two-col">{% for m in pagination.items %}{% include "_master_card.html" %}{% endfor %}</div>
+    {% if pagination.pages > 1 %}
+    <nav class="pager">
+      {% for p in range(1, pagination.pages + 1) %}
+      <a class="{{ 'on' if p == pagination.page }}" href="{{ url_for('catalog.masters', page=p, **args) }}">{{ p }}</a>
+      {% endfor %}
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="empty"><p>За цими фільтрами майстрів немає. Спробуйте розширити пошук.</p></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

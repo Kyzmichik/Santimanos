@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar, field, check, csrf %}
+{% block title %}Кабінет — Santimanos{% endblock %}
+{% block content %}
+<h1>Особистий кабінет</h1>
+{% set active = 'profile' %}{% include "account/_tabs.html" %}
+
+<div class="two">
+  <section class="card">
+    <h2>Аватарка</h2>
+    <div class="av-row">
+      {{ avatar(current_user, 120) }}
+      <form method="post" action="{{ url_for('account.upload_avatar') }}" enctype="multipart/form-data" class="form">
+        {{ avatar_form.hidden_tag() }}
+        {{ avatar_form.avatar(accept=".jpg,.jpeg,.png,.webp") }}
+        <small>JPG, PNG або WEBP до 8 МБ. Фото автоматично обрізається до квадрата.</small>
+        <button class="btn btn-sm">Завантажити</button>
+      </form>
+    </div>
+    {% if current_user.avatar %}
+    <form method="post" action="{{ url_for('account.delete_avatar') }}">{{ csrf() }}<button class="linklike danger">Видалити аватарку</button></form>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Режим майстра</h2>
+    {% if current_user.is_master %}
+      <p>Режим майстра увімкнено. Ваше резюме {% if current_user.master.is_published %}видно в каталозі{% else %}приховано з каталогу{% endif %}.</p>
+      <a class="btn btn-sm" href="{{ url_for('account.master') }}">Редагувати резюме</a>
+      <form method="post" action="{{ url_for('account.toggle_master') }}" class="inline">{{ csrf() }}<button class="linklike danger">Вимкнути режим майстра</button></form>
+    {% else %}
+      <p>Хочете пропонувати свої послуги? Увімкніть режим майстра й створіть резюме.</p>
+      <form method="post" action="{{ url_for('account.toggle_master') }}">{{ csrf() }}<button class="btn btn-sm">Стати майстром</button></form>
+    {% endif %}
+  </section>
+</div>
+
+<form method="post" class="card form">
+  <h2>Особисті дані</h2>
+  {{ form.hidden_tag() }}
+  <div class="row2">{{ field(form.first_name) }}{{ field(form.last_name) }}</div>
+  <p class="muted">Email для входу: {{ current_user.email }} — {% if current_user.email_confirmed %}підтверджено{% else %}<strong>не підтверджено</strong>{% endif %}</p>
+  {{ field(form.phone, type="tel", autocomplete="tel") }}
+  <div class="row2">{{ field(form.city) }}{{ field(form.district, list="districts") }}</div>
+  {{ field(form.about, rows=4) }}
+  <h3>Приватність</h3>
+  <div class="row2">{{ field(form.phone_visibility) }}{{ field(form.last_name_visibility) }}</div>
+  {{ check(form.notify_email) }}
+  <button class="btn">Зберегти дані</button>
+</form>
+
+<form method="post" action="{{ url_for('account.change_password') }}" class="card form">
+  <h2>Змінити пароль</h2>
+  {{ password_form.hidden_tag() }}
+  {{ field(password_form.current_password, autocomplete="current-password") }}
+  <div class="row2">{{ field(password_form.password, autocomplete="new-password") }}{{ field(password_form.password2, autocomplete="new-password") }}</div>
+  <button class="btn">Змінити пароль</button>
+</form>
+
+<details class="card">
+  <summary>Видалити акаунт</summary>
+  <form method="post" action="{{ url_for('account.delete_account') }}" class="form">
+    <p>Акаунт, резюме й усі фото буде видалено назавжди.</p>
+    {{ delete_form.hidden_tag() }}
+    {{ field(delete_form.password, autocomplete="current-password") }}
+    <button class="btn btn-danger">Видалити акаунт назавжди</button>
+  </form>
+</details>
+{% endblock %}

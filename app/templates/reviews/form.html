@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}{{ 'Редагування відгуку' if editing else 'Новий відгук' }} — Santimanos{% endblock %}
+{% block content %}
+<div class="narrow wide">
+  <h1>{{ 'Редагування відгуку' if editing else 'Відгук про майстра' }}</h1>
+  <p class="muted">Заявка: {{ job.title }}{% if job.chosen_master %} — майстер {{ job.chosen_master.user.public_name(true) }}{% endif %}</p>
+  <form method="post" class="card form" {% if not editing %}enctype="multipart/form-data"{% endif %}>
+    {{ form.hidden_tag() }}
+    <fieldset class="choice">
+      <legend>Оцінка</legend>
+      {% for v, label in form.rating.choices %}
+      <label class="check"><input type="radio" name="rating" value="{{ v }}" {{ 'checked' if form.rating.data == v }} required> <span>{{ label }} ★</span></label>
+      {% endfor %}
+      {% for e in form.rating.errors %}<span class="err">{{ e }}</span>{% endfor %}
+    </fieldset>
+    <fieldset class="choice">
+      <legend>Тип відгуку</legend>
+      {% for v, label in form.kind.choices %}
+      <label class="check"><input type="radio" name="kind" value="{{ v }}" {{ 'checked' if form.kind.data == v }} required> <span>{{ label }}</span></label>
+      {% endfor %}
+      {% for e in form.kind.errors %}<span class="err">{{ e }}</span>{% endfor %}
+    </fieldset>
+    {{ field(form.text, rows=6, hint="Опишіть, як минула робота. Без образ, номерів телефонів і посилань.") }}
+    {% if not editing %}{{ field(form.photo, accept=".jpg,.jpeg,.png,.webp") }}{% else %}
+    <p class="muted">Відгук можна редагувати протягом 48 годин після публікації. Історію змін бачить адміністратор.</p>{% endif %}
+    <button class="btn">{{ 'Зберегти зміни' if editing else 'Опублікувати відгук' }}</button>
+  </form>
+</div>
+{% endblock %}

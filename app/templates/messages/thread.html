@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar, csrf %}
+{% block title %}{{ other.public_name(true) }} — Повідомлення{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('messages.index') }}">← Усі повідомлення</a></p>
+<header class="card chat-head">
+  {{ avatar(other, 56) }}
+  <div>
+    <h1>{{ other.public_name(true) }}</h1>
+    <p class="muted">
+      {% if other.is_master and other.master and current_user.id == conv.customer_id %}<a href="{{ url_for('catalog.master_detail', master_id=conv.master_id) }}">Резюме майстра</a>{% endif %}
+      {% if conv.job %}{% if current_user.id == conv.customer_id or current_user.is_master %}· <a href="{{ url_for('jobs.detail', job_id=conv.job_id) }}">Заявка «{{ conv.job.title }}»</a>{% endif %}{% endif %}
+      {% if other.can_see_phone(current_user) %}· <a href="tel:{{ other.phone }}">{{ other.phone }}</a>{% endif %}
+    </p>
+  </div>
+</header>
+
+<div class="chat" id="chat" data-poll="{{ url_for('messages.poll', conv_id=conv.id) }}" data-last="{{ last_id }}">
+  {% for m in conv.messages %}
+  <div class="bubble {{ 'mine' if m.sender_id == current_user.id }}" data-id="{{ m.id }}">
+    {% if m.text %}<p class="pre">{{ m.text }}</p>{% endif %}
+    {% if m.photo %}<a href="{{ url_for('static', filename='uploads/messages/' ~ m.photo) }}" target="_blank" rel="noopener"><img src="{{ url_for('static', filename='uploads/messages/' ~ m.photo) }}" alt="Фото" loading="lazy"></a>{% endif %}
+    <time>{{ m.created_at|local_dt('%d.%m %H:%M') }}</time>
+  </div>
+  {% else %}
+  <p class="muted" id="chat-empty">Напишіть перше повідомлення.</p>
+  {% endfor %}
+</div>
+
+<form method="post" enctype="multipart/form-data" class="card form chat-form">
+  {{ csrf() }}
+  <textarea name="text" rows="3" maxlength="2000" placeholder="Ваше повідомлення" aria-label="Повідомлення"></textarea>
+  <div class="chat-send">
+    <input type="file" name="photo" accept=".jpg,.jpeg,.png,.webp" aria-label="Фото">
+    <button class="btn">Надіслати</button>
+  </div>
+</form>
+
+<script>
+(function () {
+  var chat = document.getElementById('chat');
+  var last = parseInt(chat.dataset.last || '0', 10);
+  function add(m) {
+    var empty = document.getElementById('chat-empty'); if (empty) empty.remove();
+    var d = document.createElement('div'); d.className = 'bubble'; d.dataset.id = m.id;
+    if (m.text) { var p = document.createElement('p'); p.className = 'pre'; p.textContent = m.text; d.appendChild(p); }
+    if (m.photo) {
+      var a = document.createElement('a'); a.href = m.photo; a.target = '_blank'; a.rel = 'noopener';
+      var i = document.createElement('img'); i.src = m.photo; i.alt = 'Фото'; a.appendChild(i); d.appendChild(a);
+    }
+    var t = document.createElement('time'); t.textContent = m.time; d.appendChild(t);
+    chat.appendChild(d); last = Math.max(last, m.id);
+  }
+  function tick() {
+    if (document.hidden) return;
+    fetch(chat.dataset.poll + '?after=' + last, { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (list) { if (list.length) { list.forEach(add); chat.scrollTop = chat.scrollHeight; } })
+      .catch(function () {});
+  }
+  chat.scrollTop = chat.scrollHeight;
+  setInterval(tick, 8000);
+})();
+</script>
+{% endblock %}

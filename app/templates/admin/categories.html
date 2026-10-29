@@ -1,0 +1,21 @@
+{% from "_macros.html" import csrf %}
+{% extends "admin/base.html" %}
+{% block admin %}
+<form method="post" action="{{ url_for('admin.category_add') }}" class="card form row3 cat-add">
+  {{ csrf() }}
+  <div class="field"><label>Нова категорія<input name="name" required maxlength="80"></label></div>
+  <div class="field"><label>Батьківська
+    <select name="parent_id"><option value="">— головна категорія —</option>{% for p in parents %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></label></div>
+  <span></span>
+  <button class="btn btn-sm">Додати</button>
+</form>
+{% macro row(c, child=False) %}
+<div class="cat-row {{ 'child' if child }}">
+  <form method="post" action="{{ url_for('admin.category_rename', cat_id=c.id) }}">{{ csrf() }}<input name="name" value="{{ c.name }}" maxlength="80" aria-label="Назва"><input name="hint" value="{{ c.hint or '' }}" maxlength="500" placeholder="Підказка для заявки" aria-label="Підказка" class="hint-input"><button class="linklike">Зберегти</button></form>
+  <form method="post" action="{{ url_for('admin.category_delete', cat_id=c.id) }}" onsubmit="return confirm('Видалити категорію?')">{{ csrf() }}<button class="linklike danger">Видалити</button></form>
+</div>
+{% endmacro %}
+<div class="card">
+  {% for p in parents %}{{ row(p) }}{% for c in p.children %}{{ row(c, true) }}{% endfor %}{% endfor %}
+</div>
+{% endblock %}

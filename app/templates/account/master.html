@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, check, price, csrf %}
+{% block title %}Моє резюме — Santimanos{% endblock %}
+{% block content %}
+<h1>Моє резюме</h1>
+{% set active = 'master' %}{% include "account/_tabs.html" %}
+
+<form method="post" class="card form">
+  <h2>Про вас</h2>
+  {{ form.hidden_tag() }}
+  {{ field(form.headline, placeholder="Наприклад: Майстер з ремонту квартир") }}
+  {{ field(form.description, rows=6, hint="Розкажіть про досвід і підхід до роботи") }}
+  <div class="row2">{{ field(form.experience_years, min=0, max=70) }}{{ field(form.schedule, placeholder="Пн–Сб, 9:00–19:00") }}</div>
+  {{ field(form.districts, placeholder="Через кому") }}
+  {{ field(form.notify_new_requests, hint="Листи надсилаються, коли з'являється заявка у ваших категоріях. Загальне вимкнення листів — у розділі «Особисті дані».") }}
+
+  <h3>Категорії</h3>
+  {% for p in parents %}
+  <fieldset class="cat-group">
+    <legend>{{ p.name }}</legend>
+    {% for c in p.children %}
+    <label class="check"><input type="checkbox" name="categories" value="{{ c.id }}" {{ 'checked' if c.id in form.categories.data }}> <span>{{ c.name }}</span></label>
+    {% endfor %}
+  </fieldset>
+  {% endfor %}
+  {% for e in form.categories.errors %}<span class="err">{{ e }}</span>{% endfor %}
+
+  {{ check(form.is_published) }}
+  <button class="btn">Зберегти резюме</button>
+</form>
+
+<section class="card" id="services">
+  <h2>Послуги та ціни</h2>
+  {% if current_user.master.services %}
+  <table class="table">
+    {% for s in current_user.master.services %}
+    <tr>
+      <td>{{ s.title }}</td>
+      <td class="nowrap">{{ price(s, currency) }}</td>
+      <td><form method="post" action="{{ url_for('account.delete_service', service_id=s.id) }}">{{ csrf() }}<button class="linklike danger">Видалити</button></form></td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">Послуг поки немає. Додайте першу — наприклад, «Укладання плитки».</p>{% endif %}
+  <form method="post" action="{{ url_for('account.add_service') }}" class="form row3">
+    {{ service_form.hidden_tag() }}
+    {{ field(service_form.title) }}
+    {{ field(service_form.price, step="0.01", min="0") }}
+    {{ field(service_form.unit) }}
+    <button class="btn btn-sm">Додати послугу</button>
+  </form>
+</section>
+
+<section class="card" id="portfolio">
+  <h2>Портфоліо</h2>
+  {% if current_user.master.photos %}
+  <div class="gallery">
+    {% for p in current_user.master.photos %}
+    <figure>
+      <img src="{{ url_for('static', filename='uploads/portfolio/' ~ p.filename) }}" alt="{{ p.caption or 'Фото роботи' }}" loading="lazy">
+      {% if p.caption %}<figcaption>{{ p.caption }}</figcaption>{% endif %}
+      <form method="post" action="{{ url_for('account.delete_photo', photo_id=p.id) }}">{{ csrf() }}<button class="linklike danger">Видалити</button></form>
+    </figure>
+    {% endfor %}
+  </div>
+  {% else %}<p class="muted">Додайте фото виконаних робіт — вони найкраще переконують замовників.</p>{% endif %}
+  <form method="post" action="{{ url_for('account.add_photo') }}" enctype="multipart/form-data" class="form">
+    {{ photo_form.hidden_tag() }}
+    {{ photo_form.photo(accept=".jpg,.jpeg,.png,.webp") }}
+    {{ field(photo_form.caption) }}
+    <button class="btn btn-sm">Додати фото</button>
+  </form>
+</section>
+{% endblock %}

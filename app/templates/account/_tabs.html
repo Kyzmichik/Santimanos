@@ -1,0 +1,12 @@
+<div class="tabs">
+  <a href="{{ url_for('account.profile') }}" class="{{ 'on' if active == 'profile' }}">Особисті дані</a>
+  {% if current_user.is_master %}
+  <a href="{{ url_for('account.master') }}" class="{{ 'on' if active == 'master' }}">Моє резюме</a>
+  <a href="{{ url_for('jobs.feed') }}" class="{{ 'on' if active == 'feed' }}">Стрічка заявок</a>
+  {% endif %}
+  <a href="{{ url_for('jobs.mine') }}" class="{{ 'on' if active == 'jobs' }}">Мої заявки</a>
+  <a href="{{ url_for('reviews.mine') }}" class="{{ 'on' if active == 'reviews' }}">Відгуки</a>
+  <a href="{{ url_for('account.favorites') }}" class="{{ 'on' if active == 'favorites' }}">Обране</a>
+  {% if current_user.is_master %}<a href="{{ url_for('catalog.master_detail', master_id=current_user.master.id) }}">Переглянути як гість</a>{% endif %}
+  <a href="{{ url_for('messages.index') }}" class="{{ 'on' if active == 'messages' }}">Повідомлення{% if unread_messages %} <span class="count">{{ unread_messages }}</span>{% endif %}</a>
+</div>
