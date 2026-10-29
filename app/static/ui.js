@@ -1,4 +1,4 @@
-/* Перемикач теми та мобільне меню. */
+/* Перемикач теми, мобільне меню та встановлення застосунку (PWA). */
 (function () {
   var KEY = 'santimanos-theme';
   var root = document.documentElement;
@@ -29,4 +29,25 @@
       }
     });
   }
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  }
+
+  // Кнопка «Встановити застосунок» з'являється, лише коли браузер дозволяє встановлення.
+  var installBtn = document.getElementById('install-btn');
+  var installEvent = null;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    installEvent = e;
+    if (installBtn) installBtn.hidden = false;
+  });
+  if (installBtn) {
+    installBtn.addEventListener('click', function () {
+      if (!installEvent) return;
+      installEvent.prompt();
+      installEvent.userChoice.finally(function () { installEvent = null; installBtn.hidden = true; });
+    });
+  }
+  window.addEventListener('appinstalled', function () { if (installBtn) installBtn.hidden = true; });
 })();

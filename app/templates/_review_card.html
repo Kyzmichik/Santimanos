@@ -1,0 +1,10 @@
+{% from "_macros.html" import avatar, stars %}
+<a class="card review-card" href="{{ url_for('catalog.master_detail', master_id=rv.master_id) }}#review-{{ rv.id }}">
+  <div class="rc-top">{{ stars(rv.rating) }}<span class="muted small">{{ rv.created_at|uk_date }}</span></div>
+  <blockquote class="rc-text">{{ rv.text|truncate(180, end='…') }}</blockquote>
+  <p class="muted small rc-author">— {{ rv.author.public_name(current_user.is_authenticated) }}, {{ rv.request.category.name|lower }}</p>
+  <div class="rc-master">
+    {{ avatar(rv.master.user, 36) }}
+    <div><strong>{{ rv.master.user.public_name(current_user.is_authenticated) }}</strong><span class="muted small">{{ rv.master.headline or 'Майстер' }}</span></div>
+  </div>
+</a>

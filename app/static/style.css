@@ -312,3 +312,56 @@ html.js .cat.on .cat-sub{display:flex}
   .search{flex-direction:column}
   .window-caption{flex-wrap:wrap}.window-caption .btn{margin-left:0;width:100%;text-align:center}
 }
+
+/* =====================================================================
+   MVP-4B: відгуки на головній, SEO-сторінки, футер, PWA
+   ===================================================================== */
+.reviews-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.review-card{display:flex;flex-direction:column;gap:8px;text-decoration:none;color:inherit;transition:border-color .15s}
+.review-card:hover{border-color:var(--blue)}
+.rc-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.rc-text{margin:0;font-size:.98rem;line-height:1.5}
+.rc-author{margin:0}
+.rc-master{display:flex;gap:10px;align-items:center;margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
+.rc-master div span{display:block}
+.block+.block{margin-top:36px}
+
+.crumbs{display:flex;flex-wrap:wrap;gap:4px 0;font-size:.9rem;margin-bottom:14px}
+.crumbs a{color:var(--muted);text-decoration:none}
+.crumbs a:hover{color:var(--blue)}
+.crumbs a+a::before{content:"›";margin:0 8px;color:var(--line)}
+.seo-head{margin-bottom:18px}
+.seo-head .lead{max-width:62ch;margin-bottom:16px}
+.h1-place{color:var(--muted);font-weight:600}
+.h1-place::before{content:"· "}
+.seo-actions{display:flex;flex-wrap:wrap;gap:10px}
+.seo-chips{margin:0 0 18px}
+.chip .n{color:var(--muted);font-size:.78rem;margin-left:2px}
+.chip-on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}
+[data-theme="dark"] .chip-on{color:#0E1420}
+.h-small{font-size:1.05rem}
+.h-small a{color:var(--ink);text-decoration:none}.h-small a:hover{color:var(--blue)}
+.seo-cities{margin-bottom:8px}
+.services-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;margin-bottom:12px}
+.services-grid .card{margin:0}
+.plain{list-style:none;margin:0;padding:0}
+.plain li{padding:4px 0}
+.plain a{text-decoration:none}.plain a:hover{text-decoration:underline}
+
+.foot{margin-top:24px;padding:36px 0 28px}
+.foot-grid{display:grid;grid-template-columns:1.2fr 2fr 1fr;gap:28px}
+.foot-brand strong{font:800 1.3rem "Bricolage Grotesque",sans-serif;color:var(--ink)}
+.foot-brand p{margin:4px 0 14px}
+.foot h2{font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:4px 0 10px}
+.foot ul{list-style:none;margin:0;padding:0}
+.foot nav[aria-label="Послуги"] ul{columns:2;column-gap:24px}
+.foot li{padding:3px 0;break-inside:avoid}
+.foot a{color:var(--ink);text-decoration:none}
+.foot a:hover{color:var(--blue);text-decoration:underline}
+@media (max-width:760px){
+  .foot-grid{grid-template-columns:1fr}
+}
+
+.offline{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px}
+.offline img{border-radius:22px;margin-bottom:10px}
+[hidden]{display:none!important}

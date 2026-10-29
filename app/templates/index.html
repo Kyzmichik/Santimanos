@@ -22,15 +22,15 @@
     {% for p in parents %}
     <li class="cat" data-scene="{{ scene_for(p.name) }}" data-id="{{ p.id }}" data-name="{{ p.name }}"
         data-sub="{{ (p.children|sort(attribute='id'))[:4]|map(attribute='name')|join(', ') }}{{ '…' if p.children|length > 4 }}"
-        data-url="{{ url_for('catalog.masters', category=p.id) }}">
+        data-url="{{ category_url(p) }}">
       <button type="button" class="cat-btn" aria-expanded="false">
         <span class="dot"></span><span class="cat-name">{{ p.name }}</span>
         <span class="cat-count">{{ p.children|length }}</span>
         <svg class="chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
       <div class="cat-sub">
-        <a class="chip chip-all" href="{{ url_for('catalog.masters', category=p.id) }}">Усе в категорії</a>
-        {% for c in p.children|sort(attribute='id') %}<a class="chip" href="{{ url_for('catalog.masters', category=c.id) }}">{{ c.name }}</a>{% endfor %}
+        <a class="chip chip-all" href="{{ category_url(p) }}">Усе в категорії</a>
+        {% for c in p.children|sort(attribute='id') %}<a class="chip" href="{{ category_url(c) }}">{{ c.name }}</a>{% endfor %}
       </div>
     </li>
     {% endfor %}
@@ -44,6 +44,20 @@
     </div>
   </aside>
 </section>
+
+{% if top %}
+<section class="block">
+  <div class="block-head"><h2>Топ майстрів</h2><a href="{{ url_for('catalog.masters', sort='rating') }}">Усі за рейтингом →</a></div>
+  <div class="grid">{% for m in top %}{% include "_master_card.html" %}{% endfor %}</div>
+</section>
+{% endif %}
+
+{% if reviews %}
+<section class="block">
+  <div class="block-head"><h2>Останні відгуки</h2></div>
+  <div class="grid reviews-grid">{% for rv in reviews %}{% include "_review_card.html" %}{% endfor %}</div>
+</section>
+{% endif %}
 
 <section class="block">
   <div class="block-head"><h2>Нові майстри</h2><a href="{{ url_for('catalog.masters') }}">Усі майстри →</a></div>

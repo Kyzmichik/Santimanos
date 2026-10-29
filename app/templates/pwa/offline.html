@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="uk" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Немає з'єднання — Santimanos</title>
+  <script>try { if (localStorage.getItem('santimanos-theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); } catch (e) {}</script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='icons/favicon.svg') }}" type="image/svg+xml">
+</head>
+<body>
+<main class="wrap offline">
+  <img src="{{ url_for('static', filename='icons/icon-192.png') }}" width="96" height="96" alt="">
+  <h1>Немає з'єднання</h1>
+  <p class="muted">Схоже, інтернет зник. Перевірте мережу — і спробуйте ще раз.</p>
+  <button class="btn" type="button" onclick="location.reload()">Спробувати ще раз</button>
+</main>
+</body>
+</html>

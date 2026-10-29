@@ -52,6 +52,9 @@ def create_app(test_config=None):
     from .reviews import bp as reviews_bp
     from .messages import bp as messages_bp, unread_count
     from .admin import bp as admin_bp
+    from .seo import bp as seo_bp
+    from .pwa import bp as pwa_bp
+    from .telegram import bp as telegram_bp
     from .models import District, User
 
     app.register_blueprint(auth_bp)
@@ -61,10 +64,23 @@ def create_app(test_config=None):
     app.register_blueprint(reviews_bp)
     app.register_blueprint(messages_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(seo_bp)
+    app.register_blueprint(pwa_bp)
+    app.register_blueprint(telegram_bp)
 
+    from .catalog import main_categories
     from .scenes import scene_for
+    from .seo import category_url, cities, city_url
+    from .telegram import enabled as telegram_enabled
 
     app.jinja_env.globals["scene_for"] = scene_for
+    app.jinja_env.globals.update(
+        category_url=category_url,
+        city_url=city_url,
+        main_categories=main_categories,
+        top_cities=lambda n=8: list(cities().values())[:n],
+        telegram_enabled=telegram_enabled,
+    )
     app.jinja_env.globals["district_names"] = lambda: [
         d.name for d in District.query.order_by(District.name)
     ]
@@ -82,6 +98,25 @@ def create_app(test_config=None):
         from .notifications import send_daily_digests
 
         click.echo(f"Надіслано дайджестів: {send_daily_digests()}")
+
+    @app.cli.command("telegram-poll")
+    def telegram_poll():
+        """Отримувати повідомлення бота без webhook (для локальної розробки)."""
+        from .telegram import poll_forever
+
+        if not app.config.get("TELEGRAM_BOT_TOKEN"):
+            raise click.ClickException("Задайте TELEGRAM_BOT_TOKEN.")
+        poll_forever(click.echo)
+
+    @app.cli.command("telegram-set-webhook")
+    def telegram_set_webhook():
+        """Підключити webhook бота до SITE_URL (на сервері з HTTPS)."""
+        from .telegram import set_webhook
+
+        if not (app.config.get("TELEGRAM_BOT_TOKEN") and app.config.get("TELEGRAM_WEBHOOK_SECRET")):
+            raise click.ClickException("Задайте TELEGRAM_BOT_TOKEN і TELEGRAM_WEBHOOK_SECRET.")
+        with app.test_request_context():
+            click.echo(set_webhook())
 
     @app.cli.command("make-admin")
     @click.argument("email")
@@ -119,6 +154,16 @@ def create_app(test_config=None):
         except Exception:
             tz = timezone.utc
         return value.replace(tzinfo=timezone.utc).astimezone(tz).strftime(fmt)
+
+    @app.template_filter("plural")
+    def plural(n, one, few, many):
+        """1 майстер, 2 майстри, 5 майстрів."""
+        n = abs(int(n))
+        if n % 10 == 1 and n % 100 != 11:
+            return one
+        if 2 <= n % 10 <= 4 and not 12 <= n % 100 <= 14:
+            return few
+        return many
 
     @app.template_filter("review_word")
     def review_word(n):

@@ -1,0 +1,16 @@
+{# Сітка майстрів із пагінацією для сторінок категорій і міст. #}
+{% if pagination.items %}
+<div class="grid">{% for m in pagination.items %}{% include "_master_card.html" %}{% endfor %}</div>
+{% if pagination.pages > 1 %}
+<nav class="pager" aria-label="Сторінки">
+  {% for p in range(1, pagination.pages + 1) %}
+  <a class="{{ 'on' if p == pagination.page }}" href="{{ url_for(request.endpoint, **dict(request.view_args, page=p if p > 1 else None)) }}">{{ p }}</a>
+  {% endfor %}
+</nav>
+{% endif %}
+{% else %}
+<div class="empty">
+  <p>{{ empty_text }}</p>
+  <a class="btn" href="{{ url_for('jobs.new', **({'category': cat.id} if cat else {})) }}">Створити заявку</a>
+</div>
+{% endif %}

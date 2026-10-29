@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Майстри — Santimanos{% endblock %}
+{% block robots %}{% if request.args %}<meta name="robots" content="noindex,follow">{% endif %}{% endblock %}
 {% block content %}
 <h1>Майстри</h1>
 <div class="layout">
@@ -16,6 +17,8 @@
         {% endfor %}
       </select>
     </label>
+    <label>Місто<input name="city" value="{{ f.city }}" list="cities"></label>
+    <datalist id="cities">{% for c in top_cities(50) %}<option value="{{ c.name }}">{% endfor %}</datalist>
     <label>Район<input name="district" value="{{ f.district }}" list="districts"></label>
     <label>Ціна послуги до, {{ currency }}<input type="number" name="max_price" min="0" step="1" value="{{ f.max_price }}"></label>
     <label>Рейтинг від

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% set place = ' — ' ~ city.name if city else '' %}
+{% set total = pagination.total %}
+{% block title %}{{ cat.name }}{{ place }}: майстри, ціни, відгуки — Santimanos{% endblock %}
+{% block description %}{{ cat.name }}{{ place }}: {{ total }} {{ total|plural('майстер', 'майстри', 'майстрів') }} з резюме, рейтингом і відгуками{% if min_price is not none %}, ціни від {{ min_price|money }} {{ currency }}{% endif %}. Створіть заявку безкоштовно — майстри самі запропонують ціну.{% endblock %}
+{% block robots %}{% if not total or pagination.page > 1 %}<meta name="robots" content="noindex,follow">{% endif %}{% endblock %}
+{% block content %}
+<nav class="crumbs" aria-label="Навігація">
+  <a href="{{ url_for('catalog.index') }}">Головна</a>
+  <a href="{{ url_for('seo.services') }}">Послуги</a>
+  {% if cat.parent %}<a href="{{ category_url(cat.parent, city.slug if city else None) }}">{{ cat.parent.name }}</a>{% endif %}
+  {% if city %}<a href="{{ category_url(cat) }}">{{ cat.name }}</a>{% endif %}
+</nav>
+
+<header class="seo-head">
+  <h1>{{ cat.name }}{% if city %} <span class="h1-place">{{ city.name }}</span>{% endif %}</h1>
+  <p class="lead">
+    {% if total %}{{ total }} {{ total|plural('майстер', 'майстри', 'майстрів') }}{% if city %} у місті {{ city.name }}{% endif %}{% if min_price is not none %}, ціни від <strong>{{ min_price|money }} {{ currency }}</strong>{% endif %}.
+    {% endif %}Порівняйте резюме, роботи й відгуки або створіть заявку — майстри самі запропонують ціну.
+  </p>
+  <div class="seo-actions">
+    <a class="btn btn-sun" href="{{ url_for('jobs.new', category=cat.id) }}">Створити заявку</a>
+    <a class="btn btn-ghost" href="{{ url_for('catalog.masters', category=cat.id, city=city.name if city else None) }}">Фільтри й сортування</a>
+  </div>
+</header>
+
+{% if siblings %}
+<p class="chips seo-chips">
+  {% if cat.parent %}<a class="chip chip-all" href="{{ category_url(cat.parent, city.slug if city else None) }}">Усе: {{ cat.parent.name }}</a>{% endif %}
+  {% for c in siblings %}
+    {% if c.id == cat.id %}<span class="chip chip-on" aria-current="page">{{ c.name }}</span>
+    {% else %}<a class="chip" href="{{ category_url(c, city.slug if city else None) }}">{{ c.name }}{% if counts.get(c.id) %} <span class="n">{{ counts[c.id] }}</span>{% endif %}</a>{% endif %}
+  {% endfor %}
+</p>
+{% endif %}
+
+{% if not city and city_list %}
+<section class="seo-cities">
+  <h2 class="h-small">{{ cat.name }} у містах</h2>
+  <p class="chips">{% for c in city_list %}<a class="chip" href="{{ category_url(cat, c.slug) }}">{{ c.name }} <span class="n">{{ c.count }}</span></a>{% endfor %}</p>
+</section>
+{% endif %}
+
+<section class="block">
+  {% set empty_text = 'Поки що тут немає майстрів' ~ (' у місті ' ~ city.name if city else '') ~ '. Створіть заявку — її побачать майстри з цієї категорії.' %}
+  {% include "seo/_masters.html" %}
+</section>
+
+{% if reviews %}
+<section class="block">
+  <div class="block-head"><h2>Що кажуть клієнти</h2></div>
+  <div class="grid reviews-grid">{% for rv in reviews %}{% include "_review_card.html" %}{% endfor %}</div>
+</section>
+{% endif %}
+{% endblock %}

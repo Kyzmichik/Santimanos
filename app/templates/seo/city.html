@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% set total = pagination.total %}
+{% block title %}Майстри — {{ city.name }}: ремонт, сад, прибирання — Santimanos{% endblock %}
+{% block description %}{{ total }} {{ total|plural('майстер', 'майстри', 'майстрів') }} у місті {{ city.name }}: ремонт, сад, прибирання та інші послуги. Резюме, ціни й відгуки, заявка безкоштовно.{% endblock %}
+{% block robots %}{% if pagination.page > 1 %}<meta name="robots" content="noindex,follow">{% endif %}{% endblock %}
+{% block content %}
+<nav class="crumbs" aria-label="Навігація">
+  <a href="{{ url_for('catalog.index') }}">Головна</a>
+  <a href="{{ url_for('seo.services') }}">Послуги</a>
+</nav>
+
+<header class="seo-head">
+  <h1>Майстри <span class="h1-place">{{ city.name }}</span></h1>
+  <p class="lead">{{ total }} {{ total|plural('майстер', 'майстри', 'майстрів') }} у місті {{ city.name }}. Оберіть послугу або створіть заявку — майстри самі запропонують ціну.</p>
+  <div class="seo-actions">
+    <a class="btn btn-sun" href="{{ url_for('jobs.new') }}">Створити заявку</a>
+    <a class="btn btn-ghost" href="{{ url_for('catalog.masters', city=city.name) }}">Фільтри й сортування</a>
+  </div>
+</header>
+
+<p class="chips seo-chips">
+  {% for p in parents if counts.get(p.id) %}<a class="chip" href="{{ category_url(p, city.slug) }}">{{ p.name }} <span class="n">{{ counts[p.id] }}</span></a>{% endfor %}
+</p>
+
+<section class="block">
+  {% set cat = None %}
+  {% set empty_text = 'Поки що тут немає майстрів.' %}
+  {% include "seo/_masters.html" %}
+</section>
+
+{% if reviews %}
+<section class="block">
+  <div class="block-head"><h2>Що кажуть клієнти</h2></div>
+  <div class="grid reviews-grid">{% for rv in reviews %}{% include "_review_card.html" %}{% endfor %}</div>
+</section>
+{% endif %}
+{% endblock %}

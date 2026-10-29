@@ -22,6 +22,11 @@ class Config:
     MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "1") == "1"
     MAIL_FROM = os.environ.get("MAIL_FROM", "Santimanos <no-reply@santimanos.local>")
 
+    # Telegram-бот для сповіщень (створіть у @BotFather). Без токена повідомлення лише друкуються в консоль.
+    TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+    TELEGRAM_BOT_NAME = os.environ.get("TELEGRAM_BOT_NAME")  # ім'я бота без @, напр. santimanos_bot
+    TELEGRAM_WEBHOOK_SECRET = os.environ.get("TELEGRAM_WEBHOOK_SECRET")  # будь-який випадковий рядок
+
     # На реальному сайті встановіть REQUIRE_EMAIL_CONFIRMATION=1
     REQUIRE_EMAIL_CONFIRMATION = os.environ.get("REQUIRE_EMAIL_CONFIRMATION", "0") == "1"
     RATELIMIT_ENABLED = True

@@ -35,9 +35,15 @@ def send_email(to, subject, body):
 
 
 def notify(user, subject, body):
-    """Сповіщення, яке користувач може вимкнути в кабінеті."""
-    if user and user.notify_email and user.email:
+    """Сповіщення на email і в Telegram; кожен канал користувач вимикає в кабінеті."""
+    if not user:
+        return
+    if user.notify_email and user.email:
         send_email(user.email, subject, body)
+    if user.telegram_chat_id and user.notify_telegram:
+        from .telegram import send_message
+
+        send_message(user.telegram_chat_id, f"{subject}\n\n{body}")
 
 
 def _serializer(salt):

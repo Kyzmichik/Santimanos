@@ -5,7 +5,7 @@ from sqlalchemy import or_
 from . import db
 from .forms import ReportForm
 from .seed import CATEGORY_ORDER
-from .models import Category, Favorite, MasterProfile, ProfileReport, Review, Service, User
+from .models import Category, Favorite, JobRequest, MasterProfile, ProfileReport, Review, Service, User
 
 bp = Blueprint("catalog", __name__)
 
@@ -34,20 +34,65 @@ def _review_stat(fn):
     )
 
 
-@bp.route("/")
-def index():
-    parents = sorted(
+# Рейтинг для «топу»: середня оцінка, «підтягнута» до PRIOR_MEAN, поки відгуків мало.
+# Так один відгук на 5★ не обганяє 4.9 зі ста відгуків.
+PRIOR_MEAN, PRIOR_WEIGHT = 4.0, 3
+
+
+def ranked(query, with_reviews_only=False):
+    """Сортування майстрів за зваженим рейтингом, далі — за кількістю відгуків."""
+    total = db.func.coalesce(_review_stat(db.func.sum), 0)
+    cnt = _review_stat(db.func.count)
+    score = (total + PRIOR_MEAN * PRIOR_WEIGHT) / (cnt + PRIOR_WEIGHT)
+    if with_reviews_only:
+        query = query.filter(cnt > 0)
+    return query.order_by(score.desc(), cnt.desc(), MasterProfile.id.desc())
+
+
+def latest_reviews(limit=6, category_ids=None, city_names=None):
+    """Свіжі позитивні відгуки про видимих майстрів (головна, сторінки категорій і міст)."""
+    query = (
+        Review.query.join(MasterProfile, Review.master_id == MasterProfile.id)
+        .join(User, MasterProfile.user_id == User.id)
+        .filter(
+            Review.is_hidden.is_(False),
+            Review.kind == "praise",
+            Review.rating >= 4,
+            User.is_master.is_(True),
+            User.is_blocked.is_(False),
+            MasterProfile.is_published.is_(True),
+        )
+    )
+    if category_ids:
+        query = query.join(JobRequest, Review.request_id == JobRequest.id).filter(
+            JobRequest.category_id.in_(category_ids)
+        )
+    if city_names:
+        query = query.filter(User.city.in_(city_names))
+    return query.order_by(Review.id.desc()).limit(limit).all()
+
+
+def main_categories():
+    return sorted(
         Category.query.filter_by(parent_id=None).all(),
         key=lambda p: (CATEGORY_ORDER.get(p.name, 999), p.id),
     )
+
+
+@bp.route("/")
+def index():
+    top = ranked(_visible_masters(), with_reviews_only=True).limit(6).all()
     latest = _visible_masters().order_by(MasterProfile.id.desc()).limit(6).all()
-    return render_template("index.html", parents=parents, latest=latest)
+    return render_template(
+        "index.html", parents=main_categories(), top=top, latest=latest, reviews=latest_reviews()
+    )
 
 
 @bp.route("/masters")
 def masters():
     q = request.args.get("q", "").strip()
     district = request.args.get("district", "").strip()
+    city = request.args.get("city", "").strip()
     category_id = request.args.get("category", type=int)
     max_price = request.args.get("max_price", type=float)
     min_rating = request.args.get("min_rating", type=float)
@@ -71,6 +116,8 @@ def masters():
     if district:
         like = f"%{district}%"
         query = query.filter(or_(User.district.ilike(like), MasterProfile.districts.ilike(like)))
+    if city:
+        query = query.filter(db.func.lower(db.func.trim(User.city)) == city.lower())
     if category_id:
         cat = db.session.get(Category, category_id)
         if cat:
@@ -111,6 +158,7 @@ def masters():
         f={
             "q": q,
             "district": district,
+            "city": city,
             "category": category_id,
             "max_price": request.args.get("max_price", ""),
             "min_rating": request.args.get("min_rating", ""),

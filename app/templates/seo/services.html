@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Усі послуги й міста — Santimanos{% endblock %}
+{% block description %}Каталог послуг Santimanos: ремонт квартир, будівництво, сад, прибирання, ремонт техніки, перевезення та інше. Майстри у вашому місті.{% endblock %}
+{% block content %}
+<nav class="crumbs" aria-label="Навігація"><a href="{{ url_for('catalog.index') }}">Головна</a></nav>
+<h1>Усі послуги</h1>
+
+<div class="services-grid">
+  {% for p in parents %}
+  <section class="card">
+    <h2 class="h-small"><a href="{{ category_url(p) }}">{{ p.name }}</a>{% if counts.get(p.id) %} <span class="n">{{ counts[p.id] }}</span>{% endif %}</h2>
+    <ul class="plain">
+      {% for c in p.children|sort(attribute='id') %}
+      <li><a href="{{ category_url(c) }}">{{ c.name }}</a>{% if counts.get(c.id) %} <span class="muted small">{{ counts[c.id] }}</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endfor %}
+</div>
+
+{% if city_list %}
+<section class="block">
+  <h2>Міста</h2>
+  <p class="chips">{% for c in city_list.values() %}<a class="chip" href="{{ city_url(c) }}">{{ c.name }} <span class="n">{{ c.count }}</span></a>{% endfor %}</p>
+</section>
+{% endif %}
+{% endblock %}

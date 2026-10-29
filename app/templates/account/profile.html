@@ -49,6 +49,22 @@
   <button class="btn">Зберегти дані</button>
 </form>
 
+{% if telegram_enabled() %}
+<section class="card tg-card">
+  <h2>Сповіщення в Telegram</h2>
+  {% if current_user.telegram_chat_id %}
+    <p>Telegram підключено. Сповіщення {% if current_user.notify_telegram %}<strong>приходять</strong>{% else %}<strong>вимкнено</strong>{% endif %}: нові повідомлення, пропозиції, відгуки{% if current_user.is_master %} і заявки{% endif %}.</p>
+    <div class="actions">
+      <form method="post" action="{{ url_for('telegram.toggle') }}">{{ csrf() }}<button class="btn btn-sm btn-ghost">{{ 'Вимкнути сповіщення' if current_user.notify_telegram else 'Увімкнути сповіщення' }}</button></form>
+      <form method="post" action="{{ url_for('telegram.unlink') }}">{{ csrf() }}<button class="linklike danger">Відключити Telegram</button></form>
+    </div>
+  {% else %}
+    <p>Отримуйте повідомлення, пропозиції й відгуки{% if current_user.is_master %} та нові заявки{% endif %} миттєво в Telegram. Натисніть кнопку — відкриється бот, у ньому натисніть «Start».</p>
+    <form method="post" action="{{ url_for('telegram.link') }}" target="_blank">{{ csrf() }}<button class="btn btn-sm">Підключити Telegram</button></form>
+  {% endif %}
+</section>
+{% endif %}
+
 <form method="post" action="{{ url_for('account.change_password') }}" class="card form">
   <h2>Змінити пароль</h2>
   {{ password_form.hidden_tag() }}

@@ -216,6 +216,112 @@ with app.app_context():
     seed_defaults()
     assert Category.query.filter_by(name="Вивіз сміття").count() == 0
 
+# =====================================================================================
+# Частина 4. MVP-4B: топ і відгуки на головній, SEO-сторінки, PWA, Telegram
+# =====================================================================================
+from app.seo import slugify
+
+assert slugify("Комп'ютери і мережі") == "kompiutery-i-merezhi" and slugify("Málaga") == "malaga"
+assert slugify("Щастя Їжак") == "shchastia-izhak" and slugify("!!!") == "c"
+
+sc = {n: app.test_client() for n in ("sa", "sb", "sk")}
+reg(sc["sa"], "Андрій", "sa@x.com", True); reg(sc["sb"], "Борис", "sb@x.com", True); reg(sc["sk"], "Катя", "sk@x.com")
+with app.app_context():
+    tile = Category.query.filter_by(name="Плитка").one()
+    tile_id, tile_slug, parent_id = tile.id, f"{tile.id}-plytka", tile.parent_id
+    lawn = Category.query.filter_by(name="Стрижка газону").one().id
+    empty_cat = Category.query.filter_by(name="Грумінг").one().id
+for n, city, cat in (("sa", " Мадрид ", tile_id), ("sb", "Málaga", lawn)):
+    ok(sc[n].post("/account/profile", data=dict(first_name=n.upper(), last_name="Сео", city=city,
+       phone_visibility="auth", last_name_visibility="all", notify_email="y")))
+    ok(sc[n].post("/account/master", data=dict(headline=f"Майстер {n}", categories=[str(cat)], is_published="y",
+       notify_new_requests="off")))
+    ok(sc[n].post("/account/master/services", data=dict(title="Робота", price="15", unit="hour")))
+sa_id, sb_id = master_id("sa@x.com"), master_id("sb@x.com")
+
+# виконана заявка з відгуком → майстер SA у топі, відгук на головній
+ok(sc["sk"].post("/requests/new", data=dict(category_id=str(tile_id), title="Плитка на кухні", description="Фартух на кухні 3 м2")))
+with app.app_context(): jid = JobRequest.query.filter_by(title="Плитка на кухні").one().id
+ok(sc["sa"].post(f"/requests/{jid}/respond", data=dict(price="90")))
+with app.app_context(): rid = db.session.get(JobRequest, jid).responses[0].id
+ok(sc["sk"].post(f"/requests/{jid}/choose/{rid}")); ok(sc["sk"].post(f"/requests/{jid}/complete"))
+ok(sc["sk"].post(f"/requests/{jid}/review", data=dict(rating="5", kind="praise", text="Неймовірно акуратна робота з плиткою")))
+home = text(ok(anon.get("/")))
+assert "Топ майстрів" in home and "Останні відгуки" in home and "Неймовірно акуратна робота" in home
+top = home.split("Топ майстрів")[1].split("Останні відгуки")[0]
+assert f"/masters/{sa_id}" in top and f"/masters/{sb_id}" not in top, "у топі лише майстри з відгуками"
+assert f'href="/services/{tile_slug}"' in home, "категорії на головній ведуть на SEO-сторінки"
+
+# сторінки категорій і міст
+ok(anon.get(f"/services/{tile_id}-wrong"), (301,))
+assert ok(anon.get(f"/services/{tile_id}-wrong/madryd"), (301,)).headers["Location"].endswith(f"/services/{tile_slug}/madryd")
+t = text(ok(anon.get(f"/services/{tile_slug}")))
+assert "SA Сео" in t and "SB Сео" not in t and 'href="/services/%s/madryd"' % tile_slug in t
+assert "ціни від <strong>15" in t and "Неймовірно акуратна" in t and "noindex" not in t
+assert f'<link rel="canonical" href="http://127.0.0.1:5000/services/{tile_slug}">' in t
+t = text(ok(anon.get(f"/services/{tile_slug}/madryd"))); assert "SA Сео" in t and "у місті Мадрид" in t
+t = text(ok(anon.get(f"/services/{tile_slug}/malaga"))); assert "SA Сео" not in t and "noindex" in t
+ok(anon.get(f"/services/{tile_slug}/atlantyda"), (404,)); ok(anon.get("/services/999999-x"), (404,))
+assert "Плитка" in text(ok(anon.get(f"/services/{parent_id}-remont-kvartyr")))
+t = text(ok(anon.get("/city/malaga"))); assert "SB Сео" in t and "SA Сео" not in t and "Догляд за садом" in t
+ok(anon.get("/city/atlantyda"), (404,))
+t = text(ok(anon.get("/services"))); assert f"/services/{tile_slug}" in t and "/city/madryd" in t
+assert "/city/madryd" in text(ok(anon.get("/masters"))), "міста у футері"
+assert "SA Сео" in text(ok(anon.get("/masters?city=мадрид"))) and "SB Сео" not in text(ok(anon.get("/masters?city=мадрид")))
+assert "noindex" in text(ok(anon.get("/masters?city=мадрид"))) and "noindex" not in text(ok(anon.get("/masters")))
+assert re.search(rf'<option (selected value="{tile_id}"|value="{tile_id}" selected)', text(ok(sc["sk"].get(f"/requests/new?category={tile_id}"))))
+assert f'href="/services/{tile_slug}"' in text(ok(anon.get(f"/masters/{sa_id}")))
+
+sm = text(ok(anon.get("/sitemap.xml")))
+for u in (f"/services/{tile_slug}</loc>", f"/services/{tile_slug}/madryd</loc>", "/city/malaga</loc>", f"/masters/{sa_id}</loc>"):
+    assert u in sm, u
+assert f"/services/{empty_cat}-" not in sm and f"/services/{tile_slug}/malaga<" not in sm, "порожні сторінки не в sitemap"
+rb = text(ok(anon.get("/robots.txt"))); assert "Disallow: /account" in rb and "Sitemap: http://127.0.0.1:5000/sitemap.xml" in rb
+
+# PWA
+mf = json.loads(text(ok(anon.get("/manifest.webmanifest"))))
+assert mf["display"] == "standalone" and {"192x192", "512x512"} <= {i["sizes"] for i in mf["icons"]}
+for i in mf["icons"]: ok(anon.get(i["src"]), (200,), i["src"])
+sw = ok(anon.get("/sw.js")); assert sw.mimetype == "application/javascript" and '"/offline"' in text(sw)
+assert "/static/uploads/" in text(sw), "фото користувачів не кешуються"
+assert "Немає з'єднання" in text(ok(anon.get("/offline")))
+assert 'rel="manifest"' in home and 'id="install-btn"' in home
+
+# Telegram
+tg = lambda chat=None: [m for m in app.extensions.get("tg_outbox", []) if not chat or m["chat_id"] == chat]
+def bot(text_, chat_id=777, kind="private"):
+    return sc["sa"].post("/telegram/webhook", json={"message": {"chat": {"id": chat_id, "type": kind}, "text": text_}},
+                         headers={"X-Telegram-Bot-Api-Secret-Token": "s3cret"})
+assert "Підключити Telegram" not in text(ok(sc["sa"].get("/account/profile"))), "без токена блок прихований"
+ok(sc["sa"].post("/account/telegram/link"), (404,))
+app.config.update(TELEGRAM_BOT_TOKEN="123:abc", TELEGRAM_BOT_NAME="santimanos_test_bot")
+assert "Підключити Telegram" in text(ok(sc["sa"].get("/account/profile")))
+ok(bot("/start x"), (404,))  # секрет webhook ще не задано
+app.config["TELEGRAM_WEBHOOK_SECRET"] = "s3cret"
+ok(sc["sa"].post("/telegram/webhook", json={}, headers={"X-Telegram-Bot-Api-Secret-Token": "wrong"}), (404,))
+loc = ok(sc["sa"].post("/account/telegram/link"), (302,)).headers["Location"]
+code = re.fullmatch(r"https://t\.me/santimanos_test_bot\?start=([\w-]+)", loc).group(1)
+ok(bot("/start " + code, kind="group")); assert not tg("777"), "групові чати ігноруються"
+ok(bot("/start wrong-code")); assert "недійсне" in tg("777")[-1]["text"]
+ok(bot("/start " + code)); assert "Готово, SA" in tg("777")[-1]["text"]
+ok(bot("/start " + code)); assert "недійсне" in tg("777")[-1]["text"], "код одноразовий"
+assert "Telegram підключено" in text(ok(sc["sa"].get("/account/profile")))
+thread = ok(sc["sk"].get(f"/messages/start/{sa_id}")).headers["Location"]
+ok(sc["sk"].post(thread, data=dict(text="Привіт з сайту")))
+assert "Нове повідомлення від Катя" in tg("777")[-1]["text"] and "/messages/" in tg("777")[-1]["text"]
+ok(sc["sa"].post("/account/telegram/toggle")); n = len(tg("777"))
+ok(sc["sa"].get(thread))  # майстер прочитав — наступне повідомлення знову сповіщало б
+ok(sc["sk"].post(thread, data=dict(text="Ще одне")))
+assert len(tg("777")) == n, "вимкнені сповіщення не надсилаються"
+ok(sc["sa"].post("/account/telegram/toggle"))
+with app.app_context():  # протермінований код
+    u = User.query.filter_by(email="sb@x.com").one(); u.telegram_link_code = "old-code"
+    from datetime import datetime; u.telegram_link_at = datetime(2020, 1, 1); db.session.commit()
+ok(bot("/start old-code", chat_id=888)); assert "недійсне" in tg("888")[-1]["text"]
+ok(bot("/stop")); assert "вимкнено" in tg("777")[-1]["text"]
+with app.app_context(): assert User.query.filter_by(email="sa@x.com").one().telegram_chat_id is None
+app.config.update(TELEGRAM_BOT_TOKEN=None, TELEGRAM_BOT_NAME=None, TELEGRAM_WEBHOOK_SECRET=None)
+
 # оновлення старої бази (схема MVP-3)
 old = os.path.join(tmp, "old.db")
 con = sqlite3.connect(old)
@@ -233,7 +339,7 @@ app2 = create_app({"TESTING": True})
 with app2.app_context():
     cols = lambda t: {r[1] for r in db.session.execute(db.text(f"PRAGMA table_info({t})"))}
     assert "invited_master_id" in cols("job_requests") and "hint" in cols("categories")
-    assert {"notify_new_requests", "email_confirmed", "is_blocked"} <= cols("users")
+    assert {"notify_new_requests", "email_confirmed", "is_blocked", "telegram_chat_id", "notify_telegram"} <= cols("users")
     u = User.query.filter_by(email="old@x.com").one()
     assert u.email_confirmed and u.notify_new_requests == "instant"
     assert Category.query.filter_by(name="Стара категорія").one().hint is None

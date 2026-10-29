@@ -5,6 +5,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Santimanos — майстри поруч{% endblock %}</title>
+  <meta name="description" content="{% block description %}Santimanos — майстри поруч: ремонт, сад, прибирання та інші роботи. Резюме, ціни й чесні відгуки, заявка безкоштовно.{% endblock %}">
+  {% block robots %}{% endblock %}
+  <link rel="canonical" href="{% block canonical %}{{ config.SITE_URL.rstrip('/') ~ request.path }}{% endblock %}">
+  <meta property="og:site_name" content="Santimanos">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ self.title() }}">
+  <meta property="og:description" content="{{ self.description() }}">
+  <meta property="og:image" content="{{ config.SITE_URL.rstrip('/') ~ url_for('static', filename='icons/icon-512.png') }}">
+  <link rel="manifest" href="{{ url_for('pwa.manifest') }}">
+  <meta name="theme-color" content="#2B59C3">
+  <link rel="icon" href="{{ url_for('static', filename='icons/favicon.svg') }}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
   <script>
     /* Світла тема — за замовчуванням; темна вмикається вручну й запам'ятовується на цьому пристрої. */
     (function () {
@@ -66,6 +78,25 @@
 </main>
 
 <datalist id="districts">{% for d in district_names() %}<option value="{{ d }}">{% endfor %}</datalist>
-<footer class="foot"><div class="wrap">Santimanos · місцеві руки, і швидко</div></footer>
+<footer class="foot">
+  <div class="wrap foot-grid">
+    <div class="foot-brand">
+      <strong>Santimanos</strong>
+      <p>Місцеві руки, і швидко.</p>
+      <button class="btn btn-sm btn-ghost" id="install-btn" type="button" hidden>Встановити застосунок</button>
+    </div>
+    <nav aria-label="Послуги">
+      <h2>Послуги</h2>
+      <ul>{% for c in main_categories() %}<li><a href="{{ category_url(c) }}">{{ c.name }}</a></li>{% endfor %}</ul>
+    </nav>
+    <nav aria-label="Міста">
+      <h2>Міста</h2>
+      <ul>
+        {% for c in top_cities() %}<li><a href="{{ city_url(c) }}">{{ c.name }}</a></li>{% endfor %}
+        <li><a href="{{ url_for('seo.services') }}">Усі послуги й міста →</a></li>
+      </ul>
+    </nav>
+  </div>
+</footer>
 </body>
 </html>

@@ -68,6 +68,10 @@ class User(UserMixin, db.Model):
     notify_email = db.Column(db.Boolean, default=True, nullable=False)
     notify_new_requests = db.Column(db.String(10), default="instant", nullable=False)  # instant / daily / off
     last_digest_at = db.Column(db.DateTime)
+    telegram_chat_id = db.Column(db.String(32), index=True)
+    notify_telegram = db.Column(db.Boolean, default=True, nullable=False)
+    telegram_link_code = db.Column(db.String(40), index=True)  # одноразовий код для /start
+    telegram_link_at = db.Column(db.DateTime)
 
     # Приватність: all — усім, auth — лише зареєстрованим, hidden — нікому
     phone_visibility = db.Column(db.String(10), default="auth", nullable=False)

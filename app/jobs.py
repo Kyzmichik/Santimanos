@@ -73,6 +73,8 @@ def new():
             form.budget.data = src.budget
         elif invited and invited.categories:
             form.category_id.data = invited.categories[0].id
+        elif db.session.get(Category, request.args.get("category", type=int) or 0):  # зі сторінки категорії
+            form.category_id.data = request.args.get("category", type=int)
     if form.validate_on_submit():
         files = [f for f in (form.photos.data or []) if f and f.filename]
         if len(files) > MAX_REQUEST_PHOTOS:
